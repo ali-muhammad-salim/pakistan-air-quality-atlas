@@ -110,7 +110,7 @@ body {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 1.5rem;
 }
 
@@ -118,6 +118,8 @@ body {
   cursor: pointer;
   background: #ffffff;
   border: 1px solid var(--card-border);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .location-card:hover {
@@ -126,14 +128,176 @@ body {
   box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.03);
 }
 
+.location-card:active {
+  transform: scale(0.99);
+}
+
+/* Horizontal Swipeable Filter Tray for Mobile & Desktop */
+.filter-tray {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-tray::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--card-border);
+  background: #ffffff;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-pill.active {
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+}
+
+/* Responsive Specs Grid */
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Responsive Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Table styles */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+}
+
 .table-row:hover {
   background-color: #f8fafc !important;
 }
 
+/* Floating Scroll to Top Button */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.75rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.scroll-top-btn:active {
+  transform: scale(0.92);
+}
+
+/* Mobile-Specific Adaptations (< 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.25rem 1rem 3rem 1rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+
+  .title {
+    font-size: 1.85rem;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 0.92rem;
+    margin-top: 0.35rem;
+    line-height: 1.45;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .glass-panel {
+    padding: 1.15rem;
+    border-radius: 14px;
+  }
+
+  .search-bar {
+    padding: 0.85rem 1.25rem 0.85rem 3.1rem !important;
+    font-size: 1rem !important; /* Prevents iOS Safari auto-zoom */
+    height: 48px !important;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .specs-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding: 1rem !important;
+  }
+
+  .chart-card {
+    padding: 1rem !important;
+    height: 270px !important;
+  }
+
+  .filter-tray {
+    justify-content: flex-start;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 1.65rem;
+  }
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -155,6 +319,6 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }

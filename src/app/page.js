@@ -17,6 +17,15 @@ export default function Home() {
   const [selectedLoc, setSelectedLoc] = useState(null);
   const [locDetails, setLocDetails] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchLocs = async () => {
@@ -42,6 +51,7 @@ export default function Home() {
   const handleSelect = async (id) => {
     setSelectedLoc(id);
     setLocDetails(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const res = await fetch(`/api/locations/${id}`);
       const data = await res.json();
@@ -49,6 +59,11 @@ export default function Home() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleBack = () => {
+    setSelectedLoc(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCopyCoords = (e, loc) => {
@@ -142,8 +157,8 @@ export default function Home() {
 
       {!selectedLoc ? (
         <>
-          {/* Filter Pills (Google / Canva Style) */}
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.8rem' }}>
+          {/* Swipeable Filter Pills (Google / Canva Style with Mobile Swipe) */}
+          <div className="filter-tray" style={{ justifyContent: 'center' }}>
             {ownerFilters.map(f => {
               const active = selectedOwner === f.id;
               const isUU = f.id === 'urban_unit';
@@ -151,20 +166,14 @@ export default function Home() {
                 <button
                   key={f.id}
                   onClick={() => setSelectedOwner(f.id)}
+                  className={`filter-pill ${active ? 'active' : ''}`}
                   style={{
-                    padding: '0.5rem 1.1rem',
-                    borderRadius: '24px',
-                    fontSize: '0.85rem',
-                    fontWeight: active ? '600' : '500',
-                    cursor: 'pointer',
                     background: active 
                       ? (isUU ? '#059669' : '#0f172a') 
                       : '#ffffff',
-                    color: active ? '#ffffff' : '#475569',
-                    border: active 
-                      ? (isUU ? '1px solid #059669' : '1px solid #0f172a') 
-                      : '1px solid #e2e8f0',
-                    transition: 'all 0.15s ease',
+                    borderColor: active 
+                      ? (isUU ? '#059669' : '#0f172a') 
+                      : '#e2e8f0',
                     boxShadow: active 
                       ? (isUU ? '0 4px 12px rgba(5, 150, 105, 0.25)' : '0 4px 12px rgba(15, 23, 42, 0.2)') 
                       : '0 1px 2px rgba(0,0,0,0.03)'
@@ -338,13 +347,13 @@ export default function Home() {
                       </div>
 
                       {/* Exact Coordinates Bar with Actions */}
-                      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.55rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#334155', fontFamily: 'ui-monospace, monospace', fontSize: '0.82rem', fontWeight: '500' }}>
                           <Navigation size={13} color="#e11d48" />
-                          {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}
+                          <span>{loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                           <button 
                             onClick={(e) => handleCopyCoords(e, loc)}
                             title="Copy exact coordinates"
@@ -352,18 +361,19 @@ export default function Home() {
                               background: copiedId === loc.id ? '#ecfdf5' : '#ffffff', 
                               border: copiedId === loc.id ? '1px solid #a7f3d0' : '1px solid #e2e8f0', 
                               color: copiedId === loc.id ? '#059669' : '#475569', 
-                              padding: '0.22rem 0.55rem', 
-                              borderRadius: '6px', 
+                              padding: '0.35rem 0.65rem', 
+                              borderRadius: '8px', 
                               cursor: 'pointer', 
                               display: 'flex', 
                               alignItems: 'center', 
-                              gap: '0.25rem',
-                              fontSize: '0.73rem',
+                              gap: '0.3rem',
+                              fontSize: '0.76rem',
                               fontWeight: '500',
+                              minHeight: '32px',
                               transition: 'all 0.15s ease'
                             }}
                           >
-                            {copiedId === loc.id ? <Check size={12} /> : <Copy size={12} />}
+                            {copiedId === loc.id ? <Check size={13} /> : <Copy size={13} />}
                             {copiedId === loc.id ? 'Copied' : 'Copy'}
                           </button>
 
@@ -377,18 +387,19 @@ export default function Home() {
                               background: '#eff6ff', 
                               border: '1px solid #bfdbfe',
                               color: '#1d4ed8', 
-                              padding: '0.22rem 0.55rem', 
-                              borderRadius: '6px', 
+                              padding: '0.35rem 0.65rem', 
+                              borderRadius: '8px', 
                               display: 'flex', 
                               alignItems: 'center', 
-                              gap: '0.25rem',
-                              fontSize: '0.73rem',
+                              gap: '0.3rem',
+                              fontSize: '0.76rem',
                               fontWeight: '600',
                               textDecoration: 'none',
+                              minHeight: '32px',
                               transition: 'all 0.15s ease'
                             }}
                           >
-                            <ExternalLink size={12} />
+                            <ExternalLink size={13} />
                             Maps
                           </a>
                         </div>
@@ -449,21 +460,23 @@ export default function Home() {
         <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
           <button 
             className="back-btn" 
-            onClick={() => setSelectedLoc(null)} 
+            onClick={handleBack} 
             style={{ 
               background: '#ffffff', 
               border: '1px solid #e2e8f0', 
               color: '#1e293b', 
-              padding: '0.6rem 1.2rem', 
-              borderRadius: '10px', 
+              padding: '0.65rem 1.25rem', 
+              borderRadius: '12px', 
               cursor: 'pointer', 
-              marginBottom: '2rem', 
-              display: 'flex', 
+              marginBottom: '1.5rem', 
+              display: 'inline-flex', 
               alignItems: 'center', 
               gap: '0.5rem', 
               transition: 'all 0.15s ease', 
               fontWeight: '600',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              fontSize: '0.92rem',
+              minHeight: '44px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}
           >
             <ArrowLeft size={18} />
@@ -471,19 +484,21 @@ export default function Home() {
           </button>
           
           {!locDetails ? (
-             <div className="skeleton-card" style={{ height: '240px', borderRadius: '16px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', border: '1px solid #e2e8f0', marginBottom: '2.5rem' }}></div>
+             <div className="skeleton-card" style={{ height: '240px', borderRadius: '16px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', border: '1px solid #e2e8f0', marginBottom: '2rem' }}></div>
           ) : (
             <>
               {/* Clean White Detail Header Card */}
-              <div className="glass-panel" style={{ marginBottom: '2.5rem', padding: '2.2rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px -2px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '2.3rem', fontWeight: '800', margin: '0 0 0.4rem 0', color: '#0f172a', letterSpacing: '-0.02em' }}>
+              <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.8rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px -2px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div style={{ flex: '1 1 280px' }}>
+                    <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: '800', margin: '0 0 0.4rem 0', color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
                       {locDetails.location.name}
                     </h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb', fontSize: '1rem', fontWeight: '600' }}>
-                      <MapPin size={18} />
-                      {locDetails.location.locality || 'Pakistan'} • Station ID: {locDetails.location.id}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#2563eb', fontSize: '0.95rem', fontWeight: '600', flexWrap: 'wrap' }}>
+                      <MapPin size={17} />
+                      <span>{locDetails.location.locality || 'Pakistan'}</span>
+                      <span style={{ color: '#94a3b8' }}>•</span>
+                      <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '500' }}>ID: {locDetails.location.id}</span>
                     </div>
                   </div>
 
@@ -492,53 +507,55 @@ export default function Home() {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                       gap: '0.5rem',
                       padding: '0.65rem 1.25rem',
-                      borderRadius: '8px',
+                      borderRadius: '10px',
                       background: '#eff6ff',
                       color: '#1d4ed8',
                       border: '1px solid #bfdbfe',
                       textDecoration: 'none',
-                      fontSize: '0.9rem',
+                      fontSize: '0.88rem',
                       fontWeight: '600',
+                      minHeight: '44px',
                       boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
                     }}
                   >
                     <ExternalLink size={16} />
-                    View Exact Location in Google Maps
+                    View on Google Maps
                   </a>
                 </div>
 
                 {/* Specs Grid in Detail View */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div className="specs-grid" style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #eef2f6' }}>
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Operating Organization</div>
-                    <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Operating Organization</div>
+                    <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Building2 size={16} color="#059669" />
                       {locDetails.location.owner || 'Community / OpenAQ'}
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Sensor Model & Number</div>
-                    <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Sensor Model & Number</div>
+                    <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Cpu size={16} color="#4f46e5" />
                       {locDetails.location.model || locDetails.location.instrument || 'Sensor Node'}
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Hardware Manufacturer</div>
-                    <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: '600' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Hardware Manufacturer</div>
+                    <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: '600' }}>
                       {locDetails.location.manufacturer || 'OpenAQ Hardware'}
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Exact Coordinates</div>
-                    <div style={{ color: '#0f172a', fontSize: '1rem', fontFamily: 'monospace', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600', marginBottom: '0.25rem' }}>Exact Coordinates</div>
+                    <div style={{ color: '#0f172a', fontSize: '0.92rem', fontFamily: 'monospace', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Navigation size={15} color="#e11d48" />
                       {locDetails.location.latitude?.toFixed(6)}, {locDetails.location.longitude?.toFixed(6)}
                     </div>
@@ -547,23 +564,35 @@ export default function Home() {
               </div>
 
               {/* Parameter Trends Section Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', marginTop: '2.5rem' }}>
-                <LineChartIcon size={24} color="#4f46e5" />
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Parameter Trends</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem', marginTop: '2rem' }}>
+                <LineChartIcon size={22} color="#4f46e5" />
+                <h3 style={{ fontSize: 'clamp(1.3rem, 3vw, 1.75rem)', fontWeight: '700', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Parameter Trends</h3>
               </div>
               
               <LocationCharts locId={locDetails.location.id} />
 
               {/* Measurements Log Section Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', marginTop: '3rem' }}>
-                <Table size={24} color="#2563eb" />
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Historical Measurements Log</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem', marginTop: '2.5rem' }}>
+                <Table size={22} color="#2563eb" />
+                <h3 style={{ fontSize: 'clamp(1.3rem, 3vw, 1.75rem)', fontWeight: '700', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Historical Measurements Log</h3>
               </div>
               
               <LocationDataTable locId={locDetails.location.id} />
             </>
           )}
         </div>
+      )}
+
+      {/* Floating Smooth Scroll to Top Button for Mobile / Desktop */}
+      {showScrollTop && (
+        <button 
+          className="scroll-top-btn" 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Scroll to top"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={22} />
+        </button>
       )}
     </main>
   );
@@ -594,58 +623,63 @@ function LocationCharts({ locId }) {
   const colors = ['#2563eb', '#7c3aed', '#dc2626', '#059669', '#d97706', '#db2777'];
 
   return (
-    <div className="glass-panel" style={{ padding: '2rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.8rem', gap: '0.4rem' }}>
-        {['7d', '1m', 'all'].map(r => {
-          const active = range === r;
-          return (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              style={{
-                padding: '0.45rem 0.95rem',
-                borderRadius: '8px',
-                border: active ? '1px solid #0f172a' : '1px solid #e2e8f0',
-                cursor: 'pointer',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                fontSize: '0.78rem',
-                background: active ? '#0f172a' : '#f8fafc',
-                color: active ? '#ffffff' : '#475569',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {r === '7d' ? '7 Days' : r === '1m' ? '1 Month' : 'All Time'}
-            </button>
-          );
-        })}
+    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Time Range</span>
+        <div style={{ display: 'flex', gap: '0.4rem', background: '#f1f5f9', padding: '3px', borderRadius: '10px' }}>
+          {['7d', '1m', 'all'].map(r => {
+            const active = range === r;
+            return (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: active ? '700' : '500',
+                  textTransform: 'uppercase',
+                  fontSize: '0.76rem',
+                  background: active ? '#ffffff' : 'transparent',
+                  color: active ? '#0f172a' : '#64748b',
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  minHeight: '36px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {r === '7d' ? '7 Days' : r === '1m' ? '1 Month' : 'All Time'}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {loading ? (
-        <div className="skeleton-card" style={{ height: '300px', borderRadius: '12px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', border: '1px solid #e2e8f0' }}></div>
+        <div className="skeleton-card" style={{ height: '280px', borderRadius: '12px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', border: '1px solid #e2e8f0' }}></div>
       ) : data.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>No chart data available for this range.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+        <div className="charts-grid">
           {parameters.map((p, idx) => {
             const color = colors[idx % colors.length];
             return (
-              <div key={p.parameter} style={{ height: '310px', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: '#0f172a', textTransform: 'uppercase', fontSize: '0.86rem', fontWeight: '700', letterSpacing: '0.5px' }}>
-                  {p.parameter} <span style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: '500' }}>({p.units})</span>
+              <div key={p.parameter} className="chart-card" style={{ height: '300px', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 0.85rem 0', color: '#0f172a', textTransform: 'uppercase', fontSize: '0.84rem', fontWeight: '700', letterSpacing: '0.5px' }}>
+                  {p.parameter} <span style={{ color: '#64748b', fontSize: '0.76rem', fontWeight: '500' }}>({p.units})</span>
                 </h4>
                 <ResponsiveContainer width="100%" height="85%">
-                  <LineChart data={data} margin={{ top: 5, right: 15, left: -25, bottom: 0 }}>
+                  <LineChart data={data} margin={{ top: 5, right: 10, left: -22, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis 
                       dataKey="utc_time" 
                       tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       stroke="#94a3b8" 
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 10, fill: '#64748b' }}
                     />
-                    <YAxis stroke="#94a3b8" tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#64748b' }} width={32} />
                     <RechartsTooltip 
-                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', fontSize: '0.85rem', color: '#0f172a', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', fontSize: '0.82rem', color: '#0f172a', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                       labelFormatter={(label) => new Date(label).toLocaleDateString()}
                     />
                     <Line 
@@ -718,53 +752,53 @@ function LocationDataTable({ locId }) {
   };
 
   return (
-    <div className="glass-panel" style={{ padding: '2rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.8rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         
-        <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap', width: '100%', maxWidth: '520px' }}>
           {/* Date Range Picker Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <Calendar size={17} color="#64748b" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.5rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', flex: '1 1 auto', minWidth: '260px' }}>
+            <Calendar size={18} color="#64748b" style={{ flexShrink: 0 }} />
             <input 
               type="date" 
               value={start}
               onChange={(e) => { setStart(e.target.value); setPage(1); }}
-              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem' }}
+              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem', width: '100%' }}
             />
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>to</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.82rem', padding: '0 2px' }}>to</span>
             <input 
               type="date" 
               value={end}
               onChange={(e) => { setEnd(e.target.value); setPage(1); }}
-              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem' }}
+              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem', width: '100%' }}
             />
           </div>
           
           {(start || end) && (
             <button 
               onClick={() => { setStart(''); setEnd(''); setPage(1); }}
-              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' }}
+              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '0.5rem 0.95rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', minHeight: '40px' }}
             >
-              Clear Filters
+              Clear
             </button>
           )}
         </div>
 
-        <div style={{ color: '#64748b', fontSize: '0.88rem' }}>
-          Showing page <strong style={{ color: '#0f172a' }}>{page}</strong> of <strong style={{ color: '#0f172a' }}>{totalPages.toLocaleString()}</strong> ({total.toLocaleString()} total records)
+        <div style={{ color: '#64748b', fontSize: '0.84rem' }}>
+          Page <strong style={{ color: '#0f172a' }}>{page}</strong> of <strong style={{ color: '#0f172a' }}>{totalPages.toLocaleString()}</strong> ({total.toLocaleString()} records)
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto', minHeight: '300px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+      <div className="table-wrapper" style={{ minHeight: '300px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '540px' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-              <th onClick={handleSort} style={{ cursor: 'pointer', padding: '1rem', color: '#334155', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+              <th onClick={handleSort} style={{ cursor: 'pointer', padding: '0.85rem 1rem', color: '#334155', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.78rem', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                 Date & Time (UTC)
                 {sortDir === 'asc' ? <ArrowUp size={14} style={{ display: 'inline', marginLeft: 4 }} /> : <ArrowDown size={14} style={{ display: 'inline', marginLeft: 4 }} />}
               </th>
               {parameters.map(p => (
-                <th key={p.parameter} style={{ padding: '1rem', color: '#475569', fontWeight: '600', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+                <th key={p.parameter} style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: '600', textTransform: 'uppercase', fontSize: '0.78rem', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                   <span style={{ color: '#0f172a', fontWeight: '700' }}>{p.parameter}</span>
                   <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: '0.35rem' }}>({p.units})</span>
                 </th>
@@ -773,13 +807,13 @@ function LocationDataTable({ locId }) {
           </thead>
           <tbody>
             {loading ? (
-              Array.from({ length: 10 }).map((_, i) => (
+              Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '1rem' }}><div style={{ height: '18px', width: '150px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
+                  <td style={{ padding: '0.9rem 1rem' }}><div style={{ height: '18px', width: '140px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
                   {parameters.length > 0 ? parameters.map((p, j) => (
-                    <td key={j} style={{ padding: '1rem' }}><div style={{ height: '18px', width: '60px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
+                    <td key={j} style={{ padding: '0.9rem 1rem' }}><div style={{ height: '18px', width: '50px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
                   )) : (
-                    <td style={{ padding: '1rem' }}><div style={{ height: '18px', width: '60px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
+                    <td style={{ padding: '0.9rem 1rem' }}><div style={{ height: '18px', width: '50px', borderRadius: '4px', background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div></td>
                   )}
                 </tr>
               ))
@@ -792,11 +826,11 @@ function LocationDataTable({ locId }) {
             ) : (
               data.map((row, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s ease' }} className="table-row">
-                  <td style={{ padding: '0.95rem 1rem', color: '#334155', whiteSpace: 'nowrap', fontSize: '0.9rem' }}>{new Date(row.utc_time).toLocaleString()}</td>
+                  <td style={{ padding: '0.85rem 1rem', color: '#334155', whiteSpace: 'nowrap', fontSize: '0.88rem' }}>{new Date(row.utc_time).toLocaleString()}</td>
                   {parameters.map(p => {
                     const val = row[p.parameter];
                     return (
-                      <td key={p.parameter} style={{ padding: '0.95rem 1rem', color: '#0f172a', fontSize: '0.95rem', fontWeight: '600' }}>
+                      <td key={p.parameter} style={{ padding: '0.85rem 1rem', color: '#0f172a', fontSize: '0.92rem', fontWeight: '600' }}>
                         {val != null ? Number(val).toFixed(2) : <span style={{ color: '#cbd5e1' }}>--</span>}
                       </td>
                     );
@@ -809,21 +843,51 @@ function LocationDataTable({ locId }) {
       </div>
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.8rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
           <button 
             disabled={page === 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            style={{ background: page === 1 ? '#f8fafc' : '#ffffff', color: page === 1 ? '#cbd5e1' : '#2563eb', border: '1px solid #e2e8f0', padding: '0.5rem', borderRadius: '8px', cursor: page === 1 ? 'not-allowed' : 'pointer', display: 'flex', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}
+            aria-label="Previous Page"
+            style={{ 
+              background: page === 1 ? '#f8fafc' : '#ffffff', 
+              color: page === 1 ? '#cbd5e1' : '#2563eb', 
+              border: '1px solid #e2e8f0', 
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px', 
+              cursor: page === 1 ? 'not-allowed' : 'pointer', 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)' 
+            }}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={20} />
           </button>
-          <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Page <strong style={{ color: '#0f172a' }}>{page}</strong> of {totalPages.toLocaleString()}</span>
+          
+          <span style={{ color: '#64748b', fontSize: '0.88rem', padding: '0 0.5rem' }}>
+            Page <strong style={{ color: '#0f172a' }}>{page}</strong> of {totalPages.toLocaleString()}
+          </span>
+          
           <button 
             disabled={page === totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            style={{ background: page === totalPages ? '#f8fafc' : '#ffffff', color: page === totalPages ? '#cbd5e1' : '#2563eb', border: '1px solid #e2e8f0', padding: '0.5rem', borderRadius: '8px', cursor: page === totalPages ? 'not-allowed' : 'pointer', display: 'flex', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}
+            aria-label="Next Page"
+            style={{ 
+              background: page === totalPages ? '#f8fafc' : '#ffffff', 
+              color: page === totalPages ? '#cbd5e1' : '#2563eb', 
+              border: '1px solid #e2e8f0', 
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px', 
+              cursor: page === totalPages ? 'not-allowed' : 'pointer', 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)' 
+            }}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </button>
         </div>
       )}
