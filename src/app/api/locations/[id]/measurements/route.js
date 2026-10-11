@@ -60,14 +60,23 @@ export async function GET(request, { params }) {
             data = await queryAll(dataQuery, [id, ...times]);
         }
         
-        return NextResponse.json({
-            data: data,
-            parameters: sensors, // Send along the units too
-            total: totalCount,
-            page,
-            limit,
-            totalPages: Math.ceil(totalCount / limit)
-        });
+        return NextResponse.json(
+            {
+                data: data,
+                parameters: sensors, // Send along the units too
+                total: totalCount,
+                page,
+                limit,
+                totalPages: Math.ceil(totalCount / limit)
+            },
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400',
+                    'CDN-Cache-Control': 'public, max-age=2592000',
+                    'Vercel-CDN-Cache-Control': 'public, max-age=2592000',
+                }
+            }
+        );
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }

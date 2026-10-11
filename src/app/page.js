@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, Activity, Navigation, ArrowLeft, Search, Table, 
   ChevronLeft, ChevronRight, Calendar, ArrowUp, ArrowDown, 
@@ -8,6 +8,8 @@ import {
   ShieldCheck, Radio, Layers, Database, Copy, Check, Sparkles, X
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+
+const LOCS_CACHE_KEY = 'paq_locations_v1';
 
 export default function Home() {
   const [locations, setLocations] = useState([]);
@@ -19,6 +21,56 @@ export default function Home() {
   const [copiedId, setCopiedId] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // In-memory caches for 0ms instant retrieval
+  const queryCache = useRef(new Map());
+  const detailsCache = useRef(new Map());
+
+  // 1. Initial Load: Hydrate from localStorage (0ms cold start) & handle deep-linked ?station=ID
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(LOCS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLocations(parsed);
+          queryCache.current.set('_ALL', parsed);
+          setLoading(false);
+        }
+      }
+    } catch (e) {
+      // LocalStorage access might fail in strict private mode
+    }
+
+    // Deep link check
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const stationParam = params.get('station');
+      if (stationParam) {
+        loadStationDetails(stationParam, false);
+      }
+    }
+  }, []);
+
+  // 2. Hardware / Browser Back Button Listener (popstate)
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const stationId = event.state?.stationId;
+      if (stationId) {
+        // Navigated to a specific station in history
+        loadStationDetails(stationId, false);
+      } else {
+        // Navigated back to Home screen: smoothly close detail view without closing app
+        setSelectedLoc(null);
+        setLocDetails(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Scroll listener for floating scroll-to-top button
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 350);
@@ -27,9 +79,19 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Search and Filter with In-Memory + LocalStorage Caching
   useEffect(() => {
+    const cacheKey = `${search.trim().toLowerCase()}_${selectedOwner}`;
+
+    // Instant in-memory cache hit
+    if (queryCache.current.has(cacheKey)) {
+      setLocations(queryCache.current.get(cacheKey));
+      setLoading(false);
+      return;
+    }
+
     const fetchLocs = async () => {
-      setLoading(true);
+      if (locations.length === 0) setLoading(true);
       try {
         let url = `/api/locations?search=${encodeURIComponent(search)}`;
         if (selectedOwner !== 'ALL') {
@@ -37,33 +99,69 @@ export default function Home() {
         }
         const res = await fetch(url);
         const data = await res.json();
-        setLocations(data.locations || []);
+        const locs = data.locations || [];
+        setLocations(locs);
+        queryCache.current.set(cacheKey, locs);
+
+        // Save default home list in localStorage for instant cold start next time
+        if (search === '' && selectedOwner === 'ALL' && locs.length > 0) {
+          try {
+            localStorage.setItem(LOCS_CACHE_KEY, JSON.stringify(locs));
+          } catch (e) {}
+        }
       } catch (e) {
         console.error(e);
       }
       setLoading(false);
     };
     
-    const timeoutId = setTimeout(fetchLocs, 250);
+    const timeoutId = setTimeout(fetchLocs, search ? 200 : 0);
     return () => clearTimeout(timeoutId);
   }, [search, selectedOwner]);
 
-  const handleSelect = async (id) => {
+  // Load Station Details with Browser History Push & In-Memory Caching
+  const loadStationDetails = async (id, pushHistory = true) => {
     setSelectedLoc(id);
-    setLocDetails(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (pushHistory && typeof window !== 'undefined') {
+      window.history.pushState({ stationId: id }, '', `?station=${id}`);
+    }
+
+    // Instant render if previously visited
+    if (detailsCache.current.has(id)) {
+      setLocDetails(detailsCache.current.get(id));
+      return;
+    }
+
     try {
       const res = await fetch(`/api/locations/${id}`);
       const data = await res.json();
-      setLocDetails(data);
+      if (data && data.location) {
+        detailsCache.current.set(id, data);
+        setLocDetails(data);
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleSelect = (id) => {
+    loadStationDetails(id, true);
+  };
+
+  // Back button in the UI: returns to home and cleans browser history
   const handleBack = () => {
-    setSelectedLoc(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined' && window.history.state?.stationId) {
+      window.history.back();
+    } else {
+      setSelectedLoc(null);
+      setLocDetails(null);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleCopyCoords = (e, loc) => {
@@ -603,15 +701,28 @@ function LocationCharts({ locId }) {
   const [parameters, setParameters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState('7d');
+  const chartCache = useRef(new Map());
 
   useEffect(() => {
+    const cacheKey = `${locId}_${range}`;
+    if (chartCache.current.has(cacheKey)) {
+      const cached = chartCache.current.get(cacheKey);
+      setData(cached.data);
+      setParameters(cached.parameters);
+      setLoading(false);
+      return;
+    }
+
     const fetchCharts = async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/locations/${locId}/chart?range=${range}`);
         const json = await res.json();
-        setData(json.data || []);
-        setParameters(json.parameters || []);
+        const d = json.data || [];
+        const p = json.parameters || [];
+        chartCache.current.set(cacheKey, { data: d, parameters: p });
+        setData(d);
+        setParameters(p);
       } catch (e) {
         console.error(e);
       }
@@ -715,8 +826,20 @@ function LocationDataTable({ locId }) {
   const [sortDir, setSortDir] = useState('desc');
   const [total, setTotal] = useState(0);
   const limit = 50;
+  const tableCache = useRef(new Map());
 
   useEffect(() => {
+    const cacheKey = `${locId}_${page}_${start}_${end}_${sortDir}`;
+    if (tableCache.current.has(cacheKey)) {
+      const cached = tableCache.current.get(cacheKey);
+      setData(cached.data);
+      setParameters(cached.parameters);
+      setTotalPages(cached.totalPages);
+      setTotal(cached.total);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -728,10 +851,17 @@ function LocationDataTable({ locId }) {
         const json = await res.json();
         
         if (json.data) {
-          setData(json.data);
-          setParameters(json.parameters || []);
-          setTotalPages(json.totalPages);
-          setTotal(json.total);
+          const entry = {
+            data: json.data,
+            parameters: json.parameters || [],
+            totalPages: json.totalPages,
+            total: json.total
+          };
+          tableCache.current.set(cacheKey, entry);
+          setData(entry.data);
+          setParameters(entry.parameters);
+          setTotalPages(entry.totalPages);
+          setTotal(entry.total);
         }
       } catch (e) {
         console.error(e);
@@ -739,10 +869,7 @@ function LocationDataTable({ locId }) {
       setLoading(false);
     };
     
-    const debounce = setTimeout(() => {
-      fetchData();
-    }, 250);
-    
+    const debounce = setTimeout(fetchData, 200);
     return () => clearTimeout(debounce);
   }, [locId, page, start, end, sortDir]);
 

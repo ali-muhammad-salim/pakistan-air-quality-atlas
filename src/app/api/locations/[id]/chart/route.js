@@ -43,7 +43,16 @@ export async function GET(request, { params }) {
         
         const data = await queryAll(dataQuery, queryParams);
         
-        return NextResponse.json({ data, parameters: sensors });
+        return NextResponse.json(
+            { data, parameters: sensors },
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400',
+                    'CDN-Cache-Control': 'public, max-age=2592000',
+                    'Vercel-CDN-Cache-Control': 'public, max-age=2592000',
+                }
+            }
+        );
     } catch (e) {
         console.error(e);
         return NextResponse.json({ error: e.message }, { status: 500 });

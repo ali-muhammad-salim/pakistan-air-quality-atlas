@@ -62,7 +62,16 @@ export async function GET(request) {
         const totalRow = await queryGet(`SELECT COUNT(*) as count FROM locations`);
         const total = totalRow ? totalRow.count : 0;
         
-        return NextResponse.json({ locations, total });
+        return NextResponse.json(
+            { locations, total },
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400',
+                    'CDN-Cache-Control': 'public, max-age=2592000',
+                    'Vercel-CDN-Cache-Control': 'public, max-age=2592000',
+                }
+            }
+        );
     } catch (e) {
         console.error(e);
         return NextResponse.json({ error: e.message }, { status: 500 });

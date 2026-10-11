@@ -37,7 +37,16 @@ export async function GET(request, { params }) {
             `, [sensorId, limit]);
         }
         
-        return NextResponse.json(measurements);
+        return NextResponse.json(
+            measurements,
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400',
+                    'CDN-Cache-Control': 'public, max-age=2592000',
+                    'Vercel-CDN-Cache-Control': 'public, max-age=2592000',
+                }
+            }
+        );
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
