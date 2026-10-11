@@ -158,7 +158,7 @@ export default function Home() {
       {!selectedLoc ? (
         <>
           {/* Swipeable Filter Pills (Google / Canva Style with Mobile Swipe) */}
-          <div className="filter-tray" style={{ justifyContent: 'center' }}>
+          <div className="filter-tray">
             {ownerFilters.map(f => {
               const active = selectedOwner === f.id;
               const isUU = f.id === 'urban_unit';
@@ -755,31 +755,37 @@ function LocationDataTable({ locId }) {
     <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         
-        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap', width: '100%', maxWidth: '520px' }}>
-          {/* Date Range Picker Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.5rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', flex: '1 1 auto', minWidth: '260px' }}>
-            <Calendar size={18} color="#64748b" style={{ flexShrink: 0 }} />
+        <div className="date-filter-group">
+          <div className="date-input-chip">
+            <Calendar size={15} color="#64748b" style={{ flexShrink: 0 }} />
+            <span className="date-input-tag">From:</span>
             <input 
               type="date" 
               value={start}
               onChange={(e) => { setStart(e.target.value); setPage(1); }}
-              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem', width: '100%' }}
+              className="date-input-field"
+              aria-label="Start date"
             />
-            <span style={{ color: '#94a3b8', fontSize: '0.82rem', padding: '0 2px' }}>to</span>
+          </div>
+          
+          <div className="date-input-chip">
+            <Calendar size={15} color="#64748b" style={{ flexShrink: 0 }} />
+            <span className="date-input-tag">To:</span>
             <input 
               type="date" 
               value={end}
               onChange={(e) => { setEnd(e.target.value); setPage(1); }}
-              style={{ background: 'transparent', border: 'none', color: '#0f172a', outline: 'none', fontSize: '0.88rem', width: '100%' }}
+              className="date-input-field"
+              aria-label="End date"
             />
           </div>
           
           {(start || end) && (
             <button 
               onClick={() => { setStart(''); setEnd(''); setPage(1); }}
-              style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '0.5rem 0.95rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', minHeight: '40px' }}
+              className="date-clear-button"
             >
-              Clear
+              Clear Dates
             </button>
           )}
         </div>
@@ -789,10 +795,10 @@ function LocationDataTable({ locId }) {
         </div>
       </div>
 
-      <div className="table-wrapper" style={{ minHeight: '300px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '540px' }}>
+      <div className="table-wrapper">
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', minWidth: '540px' }}>
           <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+            <tr style={{ background: '#f8fafc' }}>
               <th onClick={handleSort} style={{ cursor: 'pointer', padding: '0.85rem 1rem', color: '#334155', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.78rem', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                 Date & Time (UTC)
                 {sortDir === 'asc' ? <ArrowUp size={14} style={{ display: 'inline', marginLeft: 4 }} /> : <ArrowDown size={14} style={{ display: 'inline', marginLeft: 4 }} />}
