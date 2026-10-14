@@ -9,7 +9,16 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
-const LOCS_CACHE_KEY = 'paq_locations_v1';
+const LOCS_CACHE_KEY = 'paq_locations_v2';
+
+function getFullStationName(loc) {
+  if (!loc) return '';
+  const name = (loc.name || '').trim();
+  const city = (loc.locality || '').trim();
+  if (!city || city === 'Pakistan' || city === 'Unknown') return name;
+  if (name.toLowerCase().includes(city.toLowerCase())) return name;
+  return `${name}, ${city}`;
+}
 
 export default function Home() {
   const [locations, setLocations] = useState([]);
@@ -387,13 +396,13 @@ export default function Home() {
 
                     {/* Station Name & Locality */}
                     <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.35rem 0', lineHeight: 1.35 }}>
-                        {loc.name}
+                      <h3 style={{ fontSize: '1.22rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.45rem 0', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+                        {getFullStationName(loc)}
                       </h3>
                       {loc.locality && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#2563eb', fontSize: '0.86rem', fontWeight: '600' }}>
-                          <MapPin size={14} />
-                          {loc.locality}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#1d4ed8', background: '#eff6ff', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '600', border: '1px solid #dbeafe' }}>
+                          <MapPin size={13} color="#2563eb" />
+                          <span>{loc.locality}</span>
                         </div>
                       )}
                     </div>
@@ -589,12 +598,14 @@ export default function Home() {
               <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.8rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px -2px rgba(0,0,0,0.04)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div style={{ flex: '1 1 280px' }}>
-                    <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: '800', margin: '0 0 0.4rem 0', color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
-                      {locDetails.location.name}
+                    <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: '800', margin: '0 0 0.5rem 0', color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+                      {getFullStationName(locDetails.location)}
                     </h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#2563eb', fontSize: '0.95rem', fontWeight: '600', flexWrap: 'wrap' }}>
-                      <MapPin size={17} />
-                      <span>{locDetails.location.locality || 'Pakistan'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb', fontSize: '0.95rem', fontWeight: '600', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#1d4ed8', background: '#eff6ff', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600', border: '1px solid #dbeafe' }}>
+                        <MapPin size={15} color="#2563eb" />
+                        <span>{locDetails.location.locality || 'Pakistan'}</span>
+                      </div>
                       <span style={{ color: '#94a3b8' }}>•</span>
                       <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '500' }}>ID: {locDetails.location.id}</span>
                     </div>
