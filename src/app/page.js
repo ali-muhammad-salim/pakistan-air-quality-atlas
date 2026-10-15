@@ -37,12 +37,15 @@ export default function Home() {
   // 1. Initial Load: Hydrate from localStorage (0ms cold start) & handle deep-linked ?station=ID
   useEffect(() => {
     try {
+      localStorage.removeItem('paq_locations_v1');
       const cached = localStorage.getItem(LOCS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        const hasStale = Array.isArray(parsed) && parsed.some(p => p.locality === 'Pakistan' || p.name === 'Lahore');
+        if (hasStale) {
+          localStorage.removeItem(LOCS_CACHE_KEY);
+        } else if (Array.isArray(parsed) && parsed.length > 0) {
           setLocations(parsed);
-          queryCache.current.set('_ALL', parsed);
           setLoading(false);
         }
       }
@@ -88,25 +91,24 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Search and Filter with In-Memory + LocalStorage Caching
+  // Search and Filter with In-Memory + LocalStorage Caching & SWR Revalidation
   useEffect(() => {
     const cacheKey = `${search.trim().toLowerCase()}_${selectedOwner}`;
 
-    // Instant in-memory cache hit
+    // Instant in-memory cache preview
     if (queryCache.current.has(cacheKey)) {
       setLocations(queryCache.current.get(cacheKey));
       setLoading(false);
-      return;
     }
 
     const fetchLocs = async () => {
-      if (locations.length === 0) setLoading(true);
+      if (locations.length === 0 && !queryCache.current.has(cacheKey)) setLoading(true);
       try {
-        let url = `/api/locations?search=${encodeURIComponent(search)}`;
+        let url = `/api/locations?v=3&search=${encodeURIComponent(search)}`;
         if (selectedOwner !== 'ALL') {
           url += `&owner=${encodeURIComponent(selectedOwner)}`;
         }
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         const data = await res.json();
         const locs = data.locations || [];
         setLocations(locs);

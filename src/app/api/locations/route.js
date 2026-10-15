@@ -66,9 +66,9 @@ export async function GET(request) {
             { locations, total },
             {
                 headers: {
-                    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400',
-                    'CDN-Cache-Control': 'public, max-age=2592000',
-                    'Vercel-CDN-Cache-Control': 'public, max-age=2592000',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'CDN-Cache-Control': 'no-cache',
+                    'Vercel-CDN-Cache-Control': 'no-cache',
                 }
             }
         );
