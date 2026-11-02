@@ -8,12 +8,15 @@ export async function GET(request, { params }) {
         const limit = parseInt(searchParams.get('limit')) || 1000;
         const groupBy = searchParams.get('groupBy') || 'none'; // 'none', 'daily', 'monthly'
         
+        const cleanOnly = searchParams.get('clean') !== 'false'; // default to clean data
+        const qcClause = cleanOnly ? ' AND qc_flag = 0 ' : '';
+        
         let measurements;
         if (groupBy === 'daily') {
             measurements = await queryAll(`
                 SELECT date(utc_time) as utc_time, AVG(value) as value, MIN(value) as min_val, MAX(value) as max_val 
                 FROM measurements 
-                WHERE sensor_id = ? 
+                WHERE sensor_id = ? ${qcClause}
                 GROUP BY date(utc_time) 
                 ORDER BY utc_time DESC 
                 LIMIT ?
@@ -22,7 +25,7 @@ export async function GET(request, { params }) {
             measurements = await queryAll(`
                 SELECT strftime('%Y-%m', utc_time) || '-01' as utc_time, AVG(value) as value, MIN(value) as min_val, MAX(value) as max_val 
                 FROM measurements 
-                WHERE sensor_id = ? 
+                WHERE sensor_id = ? ${qcClause}
                 GROUP BY strftime('%Y-%m', utc_time) 
                 ORDER BY utc_time DESC 
                 LIMIT ?
@@ -31,7 +34,7 @@ export async function GET(request, { params }) {
             measurements = await queryAll(`
                 SELECT utc_time, local_time, value 
                 FROM measurements 
-                WHERE sensor_id = ? 
+                WHERE sensor_id = ? ${qcClause}
                 ORDER BY utc_time DESC 
                 LIMIT ?
             `, [sensorId, limit]);
